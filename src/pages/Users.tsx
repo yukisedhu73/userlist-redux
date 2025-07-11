@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchUsers } from '../features/users/userThunk';
-import { setPage } from '../features/users/userSlice';
+import { setPage, addLocalUser, updateLocalUser } from '../features/users/userSlice';
 import { Card, Avatar, Table, Button, Pagination, Spin, Input, Radio, message } from 'antd';
 import { EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined, TableOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -16,7 +16,6 @@ const Users = () => {
   const { list, loading, error, page, total, per_page } = useSelector((state: RootState) => state.users);
   const [isCardView, setIsCardView] = useState(false);
   const [search, setSearch] = useState('');
-  const [localUsers, setLocalUsers] = useState<any[]>([]);
 
   useEffect(() => {
     dispatch(fetchUsers(page));
@@ -28,16 +27,14 @@ const Users = () => {
 
     if (newUser) {
       message.success('User created successfully');
-      setLocalUsers((prev) => [newUser, ...prev]);
+      dispatch(addLocalUser(newUser));
     }
 
     if (updatedUser) {
       message.success('User updated successfully');
-      setLocalUsers((prev) =>
-        prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-      );
+      dispatch(updateLocalUser(updatedUser));
     }
-  }, [location.state]);
+  }, [location.state, dispatch]);
 
   const handlePageChange = (p: number) => {
     dispatch(setPage(p));
@@ -47,7 +44,7 @@ const Users = () => {
     setSearch(e.target.value);
   };
 
-  const filteredList = [...localUsers, ...list].filter((user, index, self) =>
+  const filteredList = list.filter((user, index, self) =>
     index === self.findIndex((u) => u.id === user.id)
   ).filter((user) => {
     const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
@@ -89,6 +86,11 @@ const Users = () => {
       ),
     },
   ];
+
+
+  useEffect(()=>{
+    console.log(filteredList)
+  },[filteredList])
 
   return (
     <div className="user-container">
@@ -150,7 +152,7 @@ const Users = () => {
         <div className="pagination-container">
           <Pagination
             current={page}
-            total={total + localUsers.length}
+            total={total}
             pageSize={per_page}
             onChange={handlePageChange}
           />

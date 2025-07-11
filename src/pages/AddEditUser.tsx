@@ -32,6 +32,7 @@ const AddEditUser: React.FC = () => {
       } else {
         const res = await axios.post('/users', payload);
         message.success('User created successfully');
+        console.log(res?.data)
         navigate('/', { state: { newUser: { ...payload, id: res.data.id } } });
       }
     } catch (error) {

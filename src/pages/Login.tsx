@@ -1,5 +1,5 @@
 // src/pages/Login.tsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button, Checkbox, Form, Input, Typography, message } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
@@ -12,13 +12,14 @@ const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { loading, error, token } = useSelector((state: RootState) => state.auth);
+  const firstLogin = useRef(true);
 
   useEffect(() => {
-    if (token) {
+    if (token && firstLogin.current) {
       message.success('Login successful!');
       navigate('/users', { replace: true });
+      firstLogin.current = false;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {
