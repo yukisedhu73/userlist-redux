@@ -2,57 +2,94 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchUsers } from '../features/users/userThunk';
-import { setPage, addLocalUser, updateLocalUser } from '../features/users/userSlice';
-import { Card, Avatar, Table, Button, Pagination, Spin, Input, Radio, message } from 'antd';
-import { EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined, TableOutlined, AppstoreOutlined } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  setPage, addLocalUser, updateLocalUser, removeLocalUser
+} from '../features/users/userSlice';
+import {
+  Card, Avatar, Table, Button, Pagination, Spin, Input, Radio, message, Modal,
+  Layout
+} from 'antd';
+import {
+  EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined, TableOutlined, AppstoreOutlined,
+  ExclamationCircleOutlined
+} from '@ant-design/icons';
+import UserModal from '../components/UserModal';
 import axios from '../api/axios';
 import '../styles/users.css';
+import { Content } from 'antd/es/layout/layout';
+import AppHeader from '../components/Header';
+
+const { confirm } = Modal;
 
 const Users = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
-  const location = useLocation();
   const { list, loading, error, page, total, per_page } = useSelector((state: RootState) => state.users);
+
   const [isCardView, setIsCardView] = useState(false);
   const [search, setSearch] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any | null>(null);
 
   useEffect(() => {
     dispatch(fetchUsers(page));
   }, [dispatch, page]);
 
-  useEffect(() => {
-    const newUser = location.state?.newUser;
-    const updatedUser = location.state?.updatedUser;
+  const handleAddUser = () => {
+    setEditingUser(null);
+    setModalOpen(true);
+  };
 
-    if (newUser) {
-      message.success('User created successfully');
-      dispatch(addLocalUser(newUser));
-    }
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setModalOpen(true);
+  };
 
-    if (updatedUser) {
+  const handleModalSuccess = (user: any, isEdit: boolean) => {
+    if (isEdit) {
+      dispatch(updateLocalUser(user));
       message.success('User updated successfully');
-      dispatch(updateLocalUser(updatedUser));
+    } else {
+      dispatch(addLocalUser(user));
+      message.success('User created successfully');
     }
-  }, [location.state, dispatch]);
+    setModalOpen(false);
+  };
 
-  const handlePageChange = (p: number) => {
-    dispatch(setPage(p));
+  const handleDeleteUser = (user: any) => {
+    confirm({
+      title: 'Are you sure you want to delete this user?',
+      icon: <ExclamationCircleOutlined />,
+      content: `${user.first_name} ${user.last_name} will be removed.`,
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await axios.delete(`/users/${user.id}`);
+          dispatch(removeLocalUser(user.id));
+          message.success('User deleted successfully');
+        } catch (err) {
+          message.error('Failed to delete user');
+        }
+      },
+    });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
-  const filteredList = list.filter((user, index, self) =>
-    index === self.findIndex((u) => u.id === user.id)
-  ).filter((user) => {
-    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
-    return (
-      fullName.includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase())
-    );
-  });
+  const filteredList = list
+    .filter((user, index, self) =>
+      index === self.findIndex((u) => u.id === user.id)
+    )
+    .filter((user) => {
+      const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
+      return (
+        fullName.includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase())
+      );
+    });
 
   const columns = [
     {
@@ -80,85 +117,113 @@ const Users = () => {
       key: 'action',
       render: (_: any, record: any) => (
         <>
-          <Button type="primary" style={{ marginRight: 8 }} icon={<EditOutlined />} onClick={() => navigate(`/user/edit/${record.id}`, { state: record })} />
-          <Button type="primary" danger icon={<DeleteOutlined />} />
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            style={{ marginRight: 8 }}
+            onClick={() => handleEditUser(record)}
+          />
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDeleteUser(record)}
+          />
         </>
       ),
     },
   ];
 
-
-  useEffect(()=>{
-    console.log(filteredList)
-  },[filteredList])
-
   return (
-    <div className="user-container">
-      <Card>
-        <div className="user-header">
-          <h2>Users</h2>
-          <div className="user-toolbar">
-            <Radio.Group
-              value={isCardView ? 'card' : 'table'}
-              onChange={(e) => setIsCardView(e.target.value === 'card')}
-              buttonStyle="solid"
-              className="view-toggle-group"
-            >
-              <Radio.Button value="table">
-                <TableOutlined /> Table
-              </Radio.Button>
-              <Radio.Button value="card">
-                <AppstoreOutlined /> Card
-              </Radio.Button>
-            </Radio.Group>
-            <Input
-              placeholder="Search user"
-              value={search}
-              onChange={handleSearchChange}
-              allowClear
-              suffix={<SearchOutlined />}
-              className="search-input"
-            />
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/user/add')}>Create User</Button>
-          </div>
-        </div>
+    <Layout style={{ minHeight: '100vh' }}>
+      <AppHeader />
+      <Content style={{ padding: 24 }}>
+        <div className="user-container">
+          <Card>
+            <div className="user-header">
+              <h2>Users</h2>
+              <div className="user-toolbar">
+                <Radio.Group
+                  value={isCardView ? 'card' : 'table'}
+                  onChange={(e) => setIsCardView(e.target.value === 'card')}
+                  buttonStyle="solid"
+                  className="view-toggle-group"
+                >
+                  <Radio.Button value="table">
+                    <TableOutlined /> Table
+                  </Radio.Button>
+                  <Radio.Button value="card">
+                    <AppstoreOutlined /> Card
+                  </Radio.Button>
+                </Radio.Group>
+                <Input
+                  placeholder="Search user"
+                  value={search}
+                  onChange={handleSearchChange}
+                  allowClear
+                  suffix={<SearchOutlined />}
+                  className="search-input"
+                />
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleAddUser}>
+                  Create User
+                </Button>
+              </div>
+            </div>
 
-        {loading ? (
-          <Spin />
-        ) : error ? (
-          <p style={{ color: 'red' }}>{error}</p>
-        ) : isCardView ? (
-          <div className="card-grid">
-            {filteredList.map((user) => (
-              <Card key={user.id} className="user-card" hoverable>
-                <Avatar src={user.avatar} size={64} style={{ margin: '0 auto' }} />
-                <h3>{user.first_name} {user.last_name}</h3>
-                <p>{user.email}</p>
-                <div className="card-actions">
-                  <Button shape="circle" icon={<EditOutlined />} onClick={() => navigate(`/user/edit/${user.id}`, { state: user })} />
-                  <Button shape="circle" icon={<DeleteOutlined />} danger />
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={filteredList.map((user) => ({ ...user, key: user.id }))}
-            pagination={false}
-          />
-        )}
+            {loading ? (
+              <Spin />
+            ) : error ? (
+              <p style={{ color: 'red' }}>{error}</p>
+            ) : isCardView ? (
+              <div className="card-grid">
+                {filteredList.map((user) => (
+                  <Card key={user.id} className="user-card" hoverable>
+                    <Avatar src={user.avatar} size={64} style={{ margin: '0 auto' }} />
+                    <h3>{user.first_name} {user.last_name}</h3>
+                    <p>{user.email}</p>
+                    <div className="card-actions">
+                      <Button
+                        shape="circle"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditUser(user)}
+                      />
+                      <Button
+                        shape="circle"
+                        icon={<DeleteOutlined />}
+                        danger
+                        onClick={() => handleDeleteUser(user)}
+                      />
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Table
+                columns={columns}
+                dataSource={filteredList.map((user) => ({ ...user, key: user.id }))}
+                pagination={false}
+              />
+            )}
 
-        <div className="pagination-container">
-          <Pagination
-            current={page}
-            total={total}
-            pageSize={per_page}
-            onChange={handlePageChange}
+            <div className="pagination-container">
+              <Pagination
+                current={page}
+                total={total}
+                pageSize={per_page}
+                onChange={(p) => dispatch(setPage(p))}
+              />
+            </div>
+          </Card>
+
+          <UserModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onSuccess={handleModalSuccess}
+            initialValues={editingUser}
           />
         </div>
-      </Card>
-    </div>
+      </Content>
+    </Layout>
   );
 };
 

@@ -68,6 +68,10 @@ const userSlice = createSlice({
         state.list[listIndex] = action.payload;
       }
     },
+    removeLocalUser: (state, action: PayloadAction<number | string>) => {
+      state.list = state.list.filter((user) => user.id !== action.payload);
+      state.total -= 1;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -82,7 +86,7 @@ const userSlice = createSlice({
         state.per_page = action.payload.per_page;
 
         const merged = [...state.localUsers, ...fetchedUsers.filter(
-          (u:any) => !state.localUsers.find(lu => lu.id === u.id)
+          (u: any) => !state.localUsers.find(lu => lu.id === u.id)
         )];
 
         state.list = merged;
@@ -94,5 +98,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { setPage, addLocalUser, updateLocalUser } = userSlice.actions;
+export const { setPage, addLocalUser, updateLocalUser, removeLocalUser } = userSlice.actions;
 export default userSlice.reducer;
