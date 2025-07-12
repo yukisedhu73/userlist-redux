@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchUsers } from '../features/users/userThunk';
-import UserModal from '../components/UserModal';
+import UserModal, { User } from '../components/UserModal';
 import axios from '../api/axios';
 import { Content } from 'antd/es/layout/layout';
 import AppHeader from '../components/Header';
@@ -24,28 +24,30 @@ const { Text } = Typography;
 
 const Users = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { list, loading, error, page, total, per_page } = useSelector((state: RootState) => state.users);
+  const { paginatedList: list, loading, error, page, total, per_page } = useSelector(
+    (state: RootState) => state.users
+  );
 
   const [isCardView, setIsCardView] = useState(false);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   useEffect(() => {
-    dispatch(fetchUsers(page));
-  }, [dispatch, page]);
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const handleAddUser = () => {
     setEditingUser(null);
     setModalOpen(true);
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: User) => {
     setEditingUser(user);
     setModalOpen(true);
   };
 
-  const handleModalSuccess = (user: any, isEdit: boolean) => {
+  const handleModalSuccess = (user: User, isEdit: boolean) => {
     if (isEdit) {
       dispatch(updateLocalUser(user));
       message.success('User updated successfully');
@@ -56,7 +58,7 @@ const Users = () => {
     setModalOpen(false);
   };
 
-  const handleDeleteUser = (user: any) => {
+  const handleDeleteUser = (user: User) => {
     confirm({
       title: 'Are you sure you want to delete this user?',
       icon: <ExclamationCircleOutlined />,
@@ -81,9 +83,7 @@ const Users = () => {
   };
 
   const filteredList = list
-    .filter((user, index, self) =>
-      index === self.findIndex((u) => u.id === user.id)
-    )
+    .filter((user, index, self) => index === self.findIndex((u) => u.id === user.id))
     .filter((user) => {
       const fullName = `${user.first_name} ${user.last_name}`.toLowerCase();
       return (
@@ -104,9 +104,7 @@ const Users = () => {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      render: (text: string) => (
-        <Text style={{ color: '#1677ff' }}>{text}</Text>
-      ),
+      render: (text: string) => <Text style={{ color: '#1677ff' }}>{text}</Text>,
     },
     {
       title: 'First Name',
@@ -121,7 +119,7 @@ const Users = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (_: any, record: any) => (
+      render: (_: any, record: User) => (
         <>
           <Button
             type="primary"
@@ -131,7 +129,7 @@ const Users = () => {
           />
           <Button
             danger
-            className='deleteBtn'
+            className="deleteBtn"
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteUser(record)}
           />
@@ -163,10 +161,8 @@ const Users = () => {
                     <AppstoreOutlined /> Card
                   </Radio.Button>
                 </Radio.Group>
-
               </div>
             }
-
             extra={
               <div style={{ display: 'flex', gap: 8 }}>
                 <Input
@@ -183,7 +179,6 @@ const Users = () => {
               </div>
             }
           >
-
             {loading ? (
               <Spin />
             ) : error ? (
@@ -193,9 +188,10 @@ const Users = () => {
                 {filteredList.map((user) => (
                   <Card key={user.id} className="user-card" hoverable>
                     <Avatar src={user.avatar} size={64} />
-                    <h3>{user.first_name} {user.last_name}</h3>
+                    <h3>
+                      {user.first_name} {user.last_name}
+                    </h3>
                     <p>{user.email}</p>
-
                     <div className="card-actions">
                       <Button
                         shape="circle"
@@ -206,7 +202,7 @@ const Users = () => {
                       <Button
                         shape="circle"
                         danger
-                        className='deleteBtn'
+                        className="deleteBtn"
                         icon={<DeleteOutlined />}
                         onClick={() => handleDeleteUser(user)}
                       />

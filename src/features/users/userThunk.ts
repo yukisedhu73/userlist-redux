@@ -3,8 +3,8 @@ import axios from '../../api/axios';
 
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async (page: number = 1) => {
-    const response = await axios.get(`/users?page=${page}`);
+  async () => {
+    const response = await axios.get('/users?per_page=50&&page=1');
     return response.data;
   }
 );

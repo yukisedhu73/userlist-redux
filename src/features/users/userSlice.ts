@@ -10,16 +10,17 @@ interface User {
 }
 
 interface UsersState {
-  list: User[]; // list from API + localStorage combined
+  allUsers: User[];         // Full list (API + local)
+  paginatedList: User[];    // Current page users
+  localUsers: User[];
   loading: boolean;
   error: string | null;
   page: number;
-  total: number;
   per_page: number;
-  localUsers: User[]; // users added locally and persisted in localStorage
+  total: number;
 }
 
-// Load from localStorage
+// Utils
 const loadLocalUsers = (): User[] => {
   try {
     const stored = localStorage.getItem('local_users');
@@ -29,18 +30,25 @@ const loadLocalUsers = (): User[] => {
   }
 };
 
+const saveLocalUsers = (users: User[]) => {
+  localStorage.setItem('local_users', JSON.stringify(users));
+};
+
+const paginate = (list: User[], page: number, per_page: number) => {
+  const start = (page - 1) * per_page;
+  return list.slice(start, start + per_page);
+};
+
+// Initial State
 const initialState: UsersState = {
-  list: [],
+  allUsers: [],
+  paginatedList: [],
+  localUsers: loadLocalUsers(),
   loading: false,
   error: null,
   page: 1,
-  total: 0,
   per_page: 6,
-  localUsers: loadLocalUsers(),
-};
-
-const saveLocalUsers = (users: User[]) => {
-  localStorage.setItem('local_users', JSON.stringify(users));
+  total: 0,
 };
 
 const userSlice = createSlice({
@@ -49,29 +57,38 @@ const userSlice = createSlice({
   reducers: {
     setPage: (state, action: PayloadAction<number>) => {
       state.page = action.payload;
+      state.paginatedList = paginate(state.allUsers, state.page, state.per_page);
     },
     addLocalUser: (state, action: PayloadAction<User>) => {
       state.localUsers.unshift(action.payload);
       saveLocalUsers(state.localUsers);
-      state.total += 1;
-      state.list = [...state.localUsers, ...state.list.filter(u => !state.localUsers.find(lu => lu.id === u.id))];
+
+      state.allUsers = [action.payload, ...state.allUsers.filter(u => u.id !== action.payload.id)];
+      state.total = state.allUsers.length;
+      state.paginatedList = paginate(state.allUsers, state.page, state.per_page);
     },
     updateLocalUser: (state, action: PayloadAction<User>) => {
-      const index = state.localUsers.findIndex((user) => user.id === action.payload.id);
+      const index = state.localUsers.findIndex((u) => u.id === action.payload.id);
       if (index !== -1) {
         state.localUsers[index] = action.payload;
         saveLocalUsers(state.localUsers);
       }
-      // Also update in list
-      const listIndex = state.list.findIndex((user) => user.id === action.payload.id);
-      if (listIndex !== -1) {
-        state.list[listIndex] = action.payload;
+
+      const allIndex = state.allUsers.findIndex((u) => u.id === action.payload.id);
+      if (allIndex !== -1) {
+        state.allUsers[allIndex] = action.payload;
       }
+
+      state.paginatedList = paginate(state.allUsers, state.page, state.per_page);
     },
     removeLocalUser: (state, action: PayloadAction<number | string>) => {
-      state.list = state.list.filter((user) => user.id !== action.payload);
-      state.total -= 1;
-    },
+      state.localUsers = state.localUsers.filter(u => u.id !== action.payload);
+      saveLocalUsers(state.localUsers);
+
+      state.allUsers = state.allUsers.filter(u => u.id !== action.payload);
+      state.total = state.allUsers.length;
+      state.paginatedList = paginate(state.allUsers, state.page, state.per_page);
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -81,21 +98,19 @@ const userSlice = createSlice({
       })
       .addCase(fetchUsers.fulfilled, (state, action) => {
         state.loading = false;
-        const fetchedUsers = action.payload.data;
-        state.total = action.payload.total + state.localUsers.length;
-        state.per_page = action.payload.per_page;
 
-        const merged = [...state.localUsers, ...fetchedUsers.filter(
-          (u: any) => !state.localUsers.find(lu => lu.id === u.id)
-        )];
+        const fetched = action.payload.data;
+        const combined = [...state.localUsers, ...fetched.filter((apiUser:any) => !state.localUsers.find(local => local.id === apiUser.id))];
 
-        state.list = merged;
+        state.allUsers = combined;
+        state.total = combined.length;
+        state.paginatedList = paginate(combined, state.page, state.per_page);
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch users';
       });
-  },
+  }
 });
 
 export const { setPage, addLocalUser, updateLocalUser, removeLocalUser } = userSlice.actions;

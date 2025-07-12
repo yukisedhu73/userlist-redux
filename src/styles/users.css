@@ -5,6 +5,7 @@
 
 .user-container .ant-card .ant-card-body {
   padding: 0 !important;
+  padding-bottom: 24px !important;
 }
 
 .user-header {
