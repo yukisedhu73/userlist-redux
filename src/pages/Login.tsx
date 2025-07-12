@@ -11,7 +11,7 @@ const { Title } = Typography;
 const Login: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { loading, error, token } = useSelector((state: RootState) => state.auth);
+  const { loading, error } = useSelector((state: RootState) => state.auth);
   const wasSubmitted = useRef(false);
 
   useEffect(() => {
