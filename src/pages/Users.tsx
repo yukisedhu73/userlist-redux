@@ -2,24 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store/store';
 import { fetchUsers } from '../features/users/userThunk';
+import UserModal from '../components/UserModal';
+import axios from '../api/axios';
+import { Content } from 'antd/es/layout/layout';
+import AppHeader from '../components/Header';
 import {
   setPage, addLocalUser, updateLocalUser, removeLocalUser
 } from '../features/users/userSlice';
 import {
   Card, Avatar, Table, Button, Pagination, Spin, Input, Radio, message, Modal,
-  Layout
+  Layout, Typography
 } from 'antd';
 import {
   EditOutlined, DeleteOutlined, SearchOutlined, PlusOutlined, TableOutlined, AppstoreOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import UserModal from '../components/UserModal';
-import axios from '../api/axios';
 import '../styles/users.css';
-import { Content } from 'antd/es/layout/layout';
-import AppHeader from '../components/Header';
 
 const { confirm } = Modal;
+const { Text } = Typography;
 
 const Users = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -93,13 +94,18 @@ const Users = () => {
 
   const columns = [
     {
+      title: 'Profile',
+      dataIndex: 'avatar',
+      key: 'avatar',
+      render: (avatar: string) => <Avatar src={avatar} />,
+      width: 120,
+    },
+    {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      render: (text: string, record: any) => (
-        <>
-          <Avatar src={record.avatar} style={{ marginRight: 8 }} /> {text}
-        </>
+      render: (text: string) => (
+        <Text style={{ color: '#1677ff' }}>{text}</Text>
       ),
     },
     {
@@ -124,8 +130,8 @@ const Users = () => {
             onClick={() => handleEditUser(record)}
           />
           <Button
-            type="primary"
             danger
+            className='deleteBtn'
             icon={<DeleteOutlined />}
             onClick={() => handleDeleteUser(record)}
           />
@@ -186,19 +192,22 @@ const Users = () => {
               <div className="card-grid">
                 {filteredList.map((user) => (
                   <Card key={user.id} className="user-card" hoverable>
-                    <Avatar src={user.avatar} size={64} style={{ margin: '0 auto' }} />
+                    <Avatar src={user.avatar} size={64} />
                     <h3>{user.first_name} {user.last_name}</h3>
                     <p>{user.email}</p>
+
                     <div className="card-actions">
                       <Button
                         shape="circle"
+                        type="primary"
                         icon={<EditOutlined />}
                         onClick={() => handleEditUser(user)}
                       />
                       <Button
                         shape="circle"
-                        icon={<DeleteOutlined />}
                         danger
+                        className='deleteBtn'
+                        icon={<DeleteOutlined />}
                         onClick={() => handleDeleteUser(user)}
                       />
                     </div>

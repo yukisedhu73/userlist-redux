@@ -32,7 +32,7 @@ const AppHeader: React.FC = () => {
           title='Log Out'
           // shape=""
           className='logOutBtn'
-          icon={<LogoutOutlined className='logOutId' />}
+          icon={<LogoutOutlined />}
           onClick={handleLogout}
         />
       </div>
