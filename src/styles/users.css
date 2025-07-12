@@ -134,3 +134,64 @@
   background-color: red !important;
   color: white !important;
 }
+
+
+
+@media (max-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    padding: 16px;
+  }
+
+  .user-card {
+    padding: 16px;
+  }
+
+  .card-actions .ant-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .pagination-container {
+    justify-content: center;
+    margin-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-container {
+    padding: 1rem;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions {
+    gap: 10px;
+  }
+
+  .user-card h3 {
+    font-size: 16px;
+  }
+
+  .user-card p {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .deleteBtn,
+  .logOutBtn {
+    font-size: 14px !important;
+    padding: 4px 8px !important;
+  }
+}
+
+
+
