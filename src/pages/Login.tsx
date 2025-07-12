@@ -15,23 +15,25 @@ const Login: React.FC = () => {
   const wasSubmitted = useRef(false);
 
   useEffect(() => {
-    if (token && wasSubmitted.current) {
-      message.success('Login successful!');
-      navigate('/users', { replace: true });
-      wasSubmitted.current = false;
-    }
-  }, [token]);
-
-  useEffect(() => {
     if (error && wasSubmitted.current) {
       message.error(error);
       wasSubmitted.current = false;
     }
   }, [error]);
 
-  const onFinish = (values: any) => {
-    wasSubmitted.current = true;
-    dispatch(loginThunk({ email: values.email, password: values.password }));
+  const onFinish = async (values: any) => {
+    try {
+      const resultAction = await dispatch(loginThunk(values));
+
+      if (loginThunk.fulfilled.match(resultAction)) {
+        message.success('Login successful!');
+        navigate('/users', { replace: true });
+      } else {
+        message.error('Login failed');
+      }
+    } catch (error) {
+      message.error('Login failed');
+    }
   };
 
   return (

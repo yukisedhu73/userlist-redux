@@ -139,15 +139,16 @@ const Users = () => {
       <AppHeader />
       <Content style={{ padding: 24 }}>
         <div className="user-container">
-          <Card>
-            <div className="user-header">
-              <h2>Users</h2>
-              <div className="user-toolbar">
+          <Card
+            title={
+              <div style={{ display: 'flex', gap: 8 }}>
+                <h3>Users</h3>
                 <Radio.Group
                   value={isCardView ? 'card' : 'table'}
                   onChange={(e) => setIsCardView(e.target.value === 'card')}
                   buttonStyle="solid"
                   className="view-toggle-group"
+                  style={{ marginTop: 17 }}
                 >
                   <Radio.Button value="table">
                     <TableOutlined /> Table
@@ -156,6 +157,12 @@ const Users = () => {
                     <AppstoreOutlined /> Card
                   </Radio.Button>
                 </Radio.Group>
+
+              </div>
+            }
+
+            extra={
+              <div style={{ display: 'flex', gap: 8 }}>
                 <Input
                   placeholder="Search user"
                   value={search}
@@ -168,7 +175,8 @@ const Users = () => {
                   Create User
                 </Button>
               </div>
-            </div>
+            }
+          >
 
             {loading ? (
               <Spin />
