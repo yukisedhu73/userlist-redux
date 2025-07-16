@@ -30,7 +30,6 @@ const AppHeader: React.FC = () => {
         <Button
           danger
           title='Log Out'
-          // shape=""
           className='logOutBtn'
           icon={<LogoutOutlined />}
           onClick={handleLogout}
