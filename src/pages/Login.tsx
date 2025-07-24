@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Button, Checkbox, Form, Input, Typography, message, Card } from 'antd';
+import { Button, Form, Input, Typography, message, Card } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../store/store';
@@ -63,6 +63,7 @@ const Login: React.FC = () => {
           >
             <Input
               placeholder="Email"
+              autoComplete="off" 
               prefix={<UserOutlined />}
             />
           </Form.Item>
@@ -74,13 +75,20 @@ const Login: React.FC = () => {
           >
             <Input.Password
               placeholder="Password"
+              autoComplete="off"
               prefix={<LockOutlined />}
             />
           </Form.Item>
 
-          <Form.Item name="remember" valuePropName="checked">
+          {/* <Form.Item name="remember" valuePropName="checked">
             <Checkbox>Remember me</Checkbox>
-          </Form.Item>
+          </Form.Item> */}
+
+          <div style={{ marginBottom: 16, color: '#888' }}>
+            <strong>Hint</strong><br />
+            Email: <code>eve.holt@reqres.in</code><br />
+            Password: <code>cityslicka</code>
+          </div>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" block loading={loading}>
